@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1
-
-FROM python:3.8-slim-buster
-CMD ["python3", "Trent.py"]
+FROM python:3.11
+RUN mkdir /opt/app
+COPY Trent.py /opt/app
+CMD ["python", "/opt/app/Trent.py"]
