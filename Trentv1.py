@@ -8,12 +8,8 @@ hlt.send_init("Trent")
 
 cardinals = [NORTH, EAST, SOUTH, WEST]
 
-# -------------------------------------#
-
 def random_direction():
     return random.randint(0,3)
-
-# -------------------------------------#
 
 def nearest_border(square):
     direction = STILL
@@ -34,30 +30,6 @@ def nearest_border(square):
             maxDistance = distance
 
     return direction
-
-# -------------------------------------#
-
-def nearest_enemy_border(square):
-    direction = STILL
-    maxDistance = 30
-
-    for dir in cardinals:
-        distance = 0
-        current = square
-        target = game_map.get_target(current, dir)
-    
-        while (target.owner == myID and distance < maxDistance):
-            distance = distance + 1
-            current = game_map.get_target(current, dir)
-            target = game_map.get_target(current, STILL)
-    
-        if (distance < maxDistance):
-            direction = dir
-            maxDistance = distance
-
-    return direction
-
-# -------------------------------------#
 
 def weakest_border(square):
     direction = STILL
@@ -80,45 +52,12 @@ def weakest_border(square):
 
     return direction
 
-# -------------------------------------#
-
 def is_target_border(target):
     for dir in cardinals:
         n = game_map.get_target(target, dir)
         if n.owner != myID:
             return True
     return False
-
-# -------------------------------------#
-
-def weakest_neighbor(square, include_self=False):
-    weakest_strength = 999
-    weakest = square
-    for dir in cardinals:
-        n: Square = game_map.get_target(square, dir)
-        if(include_self == False and n.owner == myID):
-            continue
-        if n.strength < weakest_strength:
-            weakest_strength = n.strength
-            weakest = n
-    return weakest
-
-def ideal_neighbor(square):
-    best_rating = 999
-    best = square
-    for dir in cardinals:
-        target = game_map.get_target(square, dir)
-        if target.owner == myID:
-            continue
-        rating = target.strength
-        if(target.strength > 0):
-            rating = target.production / target.strength
-        if rating < best_rating:
-            best_rating = rating
-            best = target
-    return best
-
-# -------------------------------------#
 
 def direction_to_target(square: Square, target: Square):
     cart_x = target.x - square.x
@@ -128,26 +67,18 @@ def direction_to_target(square: Square, target: Square):
         return STILL
 
     if cart_x == 0 and cart_y > 0:
-        if abs(cart_y) > 1:
-            return NORTH
         return SOUTH
 
     if cart_x == 0 and cart_y < 0:
-        if abs(cart_y) > 1:
-            return SOUTH
         return NORTH
 
     if cart_x > 0 and cart_y == 0:
-        if abs(cart_x) > 1:
-            return WEST
         return EAST
 
     if cart_x < 0 and cart_y == 0:
-        if abs(cart_x) > 1:
-            return EAST
         return WEST
 
-# -------------------------------------#
+    # TODO: add case for when the square is at the edge
 
 def neighbor_smallest_neighbor_strength(target: Square) -> int:
     neighbors = [] 
@@ -161,31 +92,41 @@ def neighbor_smallest_neighbor_strength(target: Square) -> int:
         return -1
     return neighbors[0].strength
 
-# -------------------------------------#
-
-def border_move(square):
-    target = ideal_neighbor(square)
-    if(target.strength < square.strength):
-        return Move(square, direction_to_target(square, target))
-    return Move(square, STILL)
-
-# -------------------------------------#
-
-def inside_move(square):
-    if square.strength > square.production * 3:
-        return Move(square, nearest_border(square))
-    return Move(square, STILL)
-
-# -------------------------------------#
-
 def move(square):
-    border = False
+    # neighbors_smallest_neighbor_strength = []
+    neighbors = [] 
+    target = []
+
     for dir in range(4):
         n = game_map.get_target(square, dir)
         if n.owner != myID:
-            border = True
+            neighbors.append(n)
 
-    return border_move(square) if border else inside_move(square)
+    if len(neighbors) > 0:
+        smallest = 999
+        neighbor_with_smallest_neighbor_strength: Square = square
+        for n in neighbors:
+            small_neighbor = neighbor_smallest_neighbor_strength(n)
+            if small_neighbor < smallest :
+                smallest = small_neighbor
+                neighbor_with_smallest_neighbor_strength = n
+
+        # # neighbors.sort(key=lambda a: a.production, reverse=True)
+        #
+        # sort neighbors by their strength ascending and select first
+        # neighbors.sort(key=lambda a: a.strength)
+        # target = neighbors[0]
+
+        target = neighbor_with_smallest_neighbor_strength
+        
+        # take neighbor if we have the strength
+        if target.strength < square.strength:
+            return Move(square, direction_to_target(square, target))
+    else:
+        if square.strength > square.production * 5:
+            return Move(square, weakest_border(square))
+
+    return Move(square, STILL)
     
 while True:
     game_map.get_frame()
