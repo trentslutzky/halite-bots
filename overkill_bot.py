@@ -2,7 +2,7 @@ import hlt
 from hlt import EAST, NORTH, SOUTH, STILL, WEST, Move, Square
 
 myID, game_map = hlt.get_init()
-hlt.send_init("Trent")
+hlt.send_init("OverkillBot")
 
 
 def find_nearest_enemy_direction(square):
@@ -49,7 +49,7 @@ def get_move(square):
 
     if target is not None and target.strength < square.strength:
         return Move(square, direction)
-    elif square.strength < square.production * 6:
+    elif square.strength < square.production * 5:
         return Move(square, STILL)
 
     border = any(neighbor.owner != myID for neighbor in game_map.neighbors(square))
